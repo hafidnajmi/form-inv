@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Form Input Data Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            display: block;
+        }
+        input, select, textarea, button {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+        }
+        button {
+            cursor: pointer;
+        }
+        .btn-submit, .btn-preview {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+        .btn-submit:hover, .btn-preview:hover {
+            background-color: #4cae4c;
+        }
+        .btn-reset {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .btn-reset:hover {
+            background-color: #c9302c;
+        }
+        #response-message {
+            margin-top: 20px;
+            font-weight: bold;
+            color: green;
+        }
+        /* Style untuk area preview invoice */
+        #invoice-preview {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+        #invoice-preview img.logo {
+            width: 120px;
+            height: auto;
+            top: 10px;
+            left: 2px;
+        }
+        #invoice-preview .header {
+            position: relative;
+        }
+        #invoice-preview .invoice-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        #invoice-preview .invoice-details, #invoice-preview .to-section {
+            margin-top: 20px;
+        }
+        #invoice-preview table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        #invoice-preview table, #invoice-preview th, #invoice-preview td {
+            border: 1px solid black;
+        }
+        #invoice-preview th, #invoice-preview td {
+            padding: 6px;
+            text-align: left;
+        }
+        #invoice-preview th {
+            background-color: #f2f2f2;
+        }
+        #invoice-preview .total {
+            font-weight: bold;
+        }
+        #invoice-preview .right {
+            text-align: right;
+        }
+        #invoice-preview .prepared {
+            margin-top: 40px;
+        }
+        /* Styling baris passenger form agar horizontal */
+        .passenger-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        .passenger-row > div {
+            display: flex;
+            flex-direction: column;
+        }
+        .passenger-row .passenger-name {
+            min-width: 120px;
+            flex: 1;
+        }
+        .passenger-row .description {
+            min-width: 150px;
+            flex: 2;
+            resize: none;
+        }
+        .passenger-row .airline,
+        .passenger-row .ticket-no {
+            min-width: 120px;
+            flex: 1;
+        }
+        .passenger-row .fare {
+            min-width: 100px;
+            flex: 1;
+        }
+        .passenger-row button {
+            align-self: flex-end;
+            background:#d9534f;
+            color:white;
+            border:none;
+            padding:5px 10px;
+            border-radius: 4px;
+        }
+        .passenger-row button:hover {
+            background:#c9302c;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Form Input Data Invoice</h2>
+
+    <div class="form-group">
+        <label for="date">Date</label>
+        <input type="date" id="date" />
+    </div>
+
+    <div class="form-group">
+        <label for="due-date">Due Date</label>
+        <input type="date" id="due-date" />
+    </div>
+
+    <div class="form-group">
+        <label for="customer-name">To (Customer Name)</label>
+        <div style="display: flex; gap: 10px;">
+            <select id="customer-name" onchange="updateCustomerAddress()">
+                <option value="">Pilih Customer</option>
+                <option value="PT Alpha">PT Alpha</option>
+                <option value="PT Beta">PT Beta</option>
+                <option value="PT Gamma">PT Gamma</option>
+                <option value="Custom">Custom</option>
+            </select>
+            <input type="text" id="custom-customer-name" style="display:none" placeholder="Masukkan Nama Customer" />
+            <button id="reset-customer" class="btn-reset" style="display:none" onclick="resetCustomer()">Reset</button>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="customer-address">Customer Address</label>
+        <input type="text" id="customer-address" placeholder="Alamat Customer" readonly />
+    </div>
+
+    <div class="form-group">
+        <label for="invoice-no">Invoice No</label>
+        <input type="text" id="invoice-no" placeholder="Masukkan nomor invoice" />
+    </div>
+
+    <div id="passenger-container">
+        <div class="form-group passenger-row">
+            <div>
+                <label>Passenger Name</label>
+                <input type="text" class="passenger-name" placeholder="Nama Penumpang" />
+            </div>
+            <div>
+                <label>Description</label>
+                <textarea class="description" rows="1" placeholder="Deskripsi"></textarea>
+            </div>
+            <div>
+                <label>Airline</label>
+                <input type="text" class="airline" placeholder="Nama Maskapai" />
+            </div>
+            <div>
+                <label>Ticket No</label>
+                <input type="text" class="ticket-no" placeholder="Nomor Tiket" />
+            </div>
+            <div>
+                <label>Fare</label>
+                <input type="number" class="fare" placeholder="Tarif" />
+            </div>
+            <button type="button" onclick="removePassengerRow(this)">Remove</button>
+        </div>
+    </div>
+
+    <button type="button" onclick="addPassengerRow()" style="background:#0275d8;color:white;border:none;padding:10px 15px; border-radius: 4px; cursor:pointer; margin-bottom: 15px;">Tambah Penumpang</button>
+
+    <div class="form-group">
+        <label for="service-fee">Service Fee</label>
+        <input type="number" id="service-fee" placeholder="Masukkan service fee" value="0" />
+    </div>
+
+    <div>
+        <button class="btn-preview" onclick="previewInvoice()">Preview Invoice</button>
+        <button class="btn-submit" onclick="submitInvoice()">Submit Invoice</button>
+    </div>
+
+    <div id="response-message"></div>
+</div>
+
+<div id="invoice-preview" style="display:none;"></div>
+
+<script>
+    const customerData = {
+        "PT Alpha": "Alamat PT Alpha",
+        "PT Beta": "Alamat PT Beta",
+        "PT Gamma": "Alamat PT Gamma"
+    };
+
+    document.getElementById('date').valueAsDate = new Date();
+
+    const dateInput = document.getElementById('date');
+    const dueDateInput = document.getElementById('due-date');
+
+    function setDueDate() {
+        if (dateInput.value) {
+            const date = new Date(dateInput.value);
+            date.setDate(date.getDate() + 7);
+            dueDateInput.valueAsDate = date;
+        }
+    }
+    setDueDate();
+    dateInput.addEventListener('change', setDueDate);
+
+    function updateCustomerAddress() {
+        const selectElement = document.getElementById('customer-name');
+        const customInput = document.getElementById('custom-customer-name');
+        const customerName = selectElement.value;
+        const customerAddress = document.getElementById('customer-address');
+        const resetButton = document.getElementById('reset-customer');
+
+        if (customerName === "Custom") {
+            selectElement.style.display = 'none';
+            customInput.style.display = 'block';
+            customInput.focus();
+            customerAddress.readOnly = false;
+            customerAddress.value = '';
+            resetButton.style.display = 'inline-block';
+        } else {
+            selectElement.style.display = 'block';
+            customInput.style.display = 'none';
+            customerAddress.readOnly = true;
+            customerAddress.value = customerData[customerName] || '';
+            resetButton.style.display = 'none';
+        }
+    }
+
+    function resetCustomer() {
+        document.getElementById('customer-name').style.display = 'block';
+        document.getElementById('customer-name').value = '';
+        document.getElementById('custom-customer-name').style.display = 'none';
+        document.getElementById('custom-customer-name').value = '';
+        document.getElementById('customer-address').value = '';
+        document.getElementById('customer-address').readOnly = true;
+        document.getElementById('reset-customer').style.display = 'none';
+    }
+
+    function addPassengerRow() {
+        const container = document.getElementById('passenger-container');
+        const newRow = document.createElement('div');
+        newRow.classList.add('form-group', 'passenger-row');
+        newRow.innerHTML = `
+            <div>
+                <label>Passenger Name</label>
+                <input type="text" class="passenger-name" placeholder="Nama Penumpang" />
+            </div>
+            <div>
+                <label>Description</label>
+                <textarea class="description" rows="1" placeholder="Deskripsi"></textarea>
+            </div>
+            <div>
+                <label>Airline</label>
+                <input type="text" class="airline" placeholder="Nama Maskapai" />
+            </div>
+            <div>
+                <label>Ticket No</label>
+                <input type="text" class="ticket-no" placeholder="Nomor Tiket" />
+            </div>
+            <div>
+                <label>Fare</label>
+                <input type="number" class="fare" placeholder="Tarif" />
+            </div>
+            <button type="button" onclick="removePassengerRow(this)">Remove</button>
+        `;
+        container.appendChild(newRow);
+    }
+
+    function removePassengerRow(button) {
+        const row = button.parentElement;
+        row.remove();
+    }
+
+    function calculateTotals(passengers, serviceFee) {
+        const totalFare = passengers.reduce((sum, p) => sum + p.fare, 0);
+        const grandTotal = totalFare + serviceFee;
+        return { totalFare, grandTotal };
+    }
+
+    function renderInvoicePreview(data) {
+        const container = document.getElementById('invoice-preview');
+        let passengerRowsHTML = '';
+        data.passengers.forEach((p, index) => {
+            passengerRowsHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${p.passenger_name}</td>
+                    <td>${p.description}</td>
+                    <td>${p.airline}</td>
+                    <td>${p.ticket_no}</td>
+                    <td class="right">${p.fare.toLocaleString()}</td>
+                </tr>
+            `;
+        });
+
+        const html = `
+            <div class="header">
+                <img class="logo" src="logo.png" alt="Company Logo" />
+                <div class="invoice-title">TRAVEL SERVICE INVOICE</div>
+            </div>
+            <div class="invoice-details">
+                <p>Date: ${data.date}</p>
+                <p>Due Date: ${data.due_date}</p>
+            </div>
+            <div class="to-section">
+                <p>To: <strong>${data.customer_name}</strong></p>
+                <p>${data.customer_address}</p>
+                <p>Invoice No: <strong>${data.invoice_number}</strong></p>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>NAME OF PASSENGER</th>
+                        <th>DESCRIPTION</th>
+                        <th>AIRLINES</th>
+                        <th>TICKET NO</th>
+                        <th class="right">TOTAL FARE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${passengerRowsHTML}
+                </tbody>
+            </table>
+            <table style="margin-top: 10px; width: 50%; float: right;">
+                <tr>
+                    <td class="total">TOTAL</td>
+                    <td class="right">Rp ${data.totalFare.toLocaleString()}</td>
+                </tr>
+                <tr>
+                    <td class="total">SERVICE FEE</td>
+                    <td class="right">Rp ${data.serviceFee.toLocaleString()}</td>
+                </tr>
+                <tr>
+                    <td class="total">GRAND TOTAL</td>
+                    <td class="right">Rp ${data.grandTotal.toLocaleString()}</td>
+                </tr>
+            </table>
+            <div style="clear: both;"></div>
+            <div class="prepared" style="margin-top: 70px; margin-bottom: 50px;">
+                <p style="margin-bottom:70px"><strong>Prepared by:</strong></p>
+                <p><strong>(Lilis)</strong></p>
+                <p>PAYMENT</p>
+                <p>MAYBANK: A/C 2737.000.566(IDR)</p>
+                <p>BENEFICIARY: PT PRATAMA ALHABINA WISATA</p>
+            </div>
+        `;
+
+        container.innerHTML = html;
+        container.style.display = 'block';
+    }
+
+    function getFormData() {
+        const customerNameSelect = document.getElementById('customer-name');
+        const customInput = document.getElementById('custom-customer-name');
+        const customerName = customerNameSelect.style.display === 'none' ? customInput.value.trim() : customerNameSelect.value.trim();
+
+        // Ambil semua data penumpang
+        const passengers = [];
+        const rows = document.querySelectorAll('.passenger-row');
+        rows.forEach(row => {
+            const passenger_name = row.querySelector('.passenger-name').value.trim();
+            const description = row.querySelector('.description').value.trim();
+            const airline = row.querySelector('.airline').value.trim();
+            const ticket_no = row.querySelector('.ticket-no').value.trim();
+            const fare = parseFloat(row.querySelector('.fare').value) || 0;
+            if(passenger_name) { // Pastikan ada nama penumpang, baru dimasukkan
+                passengers.push({ passenger_name, description, airline, ticket_no, fare });
+            }
+        });
+
+        const serviceFee = parseFloat(document.getElementById('service-fee').value) || 0;
+
+        const data = {
+            date: document.getElementById('date').value,
+            due_date: document.getElementById('due-date').value,
+            customer_name: customerName,
+            customer_address: document.getElementById('customer-address').value.trim(),
+            invoice_number: document.getElementById('invoice-no').value.trim(),
+            passengers,
+            serviceFee,
+        };
+        return data;
+    }
+
+    function previewInvoice() {
+        const data = getFormData();
+
+        if (!data.customer_name) {
+            alert("Mohon pilih atau isi nama customer.");
+            return;
+        }
+        if (data.passengers.length === 0) {
+            alert("Mohon isi minimal satu penumpang.");
+            return;
+        }
+
+        const totals = calculateTotals(data.passengers, data.serviceFee);
+        data.totalFare = totals.totalFare;
+        data.grandTotal = totals.grandTotal;
+
+        renderInvoicePreview(data);
+    }
+
+    async function submitInvoice() {
+        const data = getFormData();
+
+        if (!data.customer_name) {
+            alert("Mohon pilih atau isi nama customer.");
+            return;
+        }
+        if (data.passengers.length === 0) {
+            alert("Mohon isi minimal satu penumpang.");
+            return;
+        }
+
+        const totals = calculateTotals(data.passengers, data.serviceFee);
+        data.totalFare = totals.totalFare;
+        data.grandTotal = totals.grandTotal;
+
+        const responseMessage = document.getElementById('response-message');
+        responseMessage.style.color = 'black';
+        responseMessage.textContent = 'Mengirim data...';
+
+        try {
+            // Ganti URL webhook n8n-mu
+            const webhookUrl = 'https://n8n-mwjjuprcz1ho.ciluba.sumopod.my.id/webhook/form-invoice';
+
+            const response = await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.pdfLink) {
+                responseMessage.style.color = 'green';
+                responseMessage.innerHTML = `Invoice berhasil dibuat! <a href="${result.pdfLink}" target="_blank">Download PDF</a>`;
+            } else {
+                responseMessage.style.color = 'green';
+                responseMessage.textContent = 'Invoice berhasil dibuat!';
+            }
+        } catch (error) {
+            responseMessage.style.color = 'red';
+            responseMessage.textContent = `Gagal mengirim data: ${error.message}`;
+            console.error('Error:', error);
+        }
+    }
+</script>
+
+</body>
+</html>
