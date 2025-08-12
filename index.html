@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Form Input Data Invoice</title>
     <style>
+        /* Styles sama persis seperti kamu sudah buat */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
@@ -256,11 +257,13 @@
         "PT Gamma": "Alamat PT Gamma"
     };
 
+    // Set tanggal hari ini sebagai default date
     document.getElementById('date').valueAsDate = new Date();
 
     const dateInput = document.getElementById('date');
     const dueDateInput = document.getElementById('due-date');
 
+    // Fungsi otomatis set due date +7 hari dari tanggal invoice
     function setDueDate() {
         if (dateInput.value) {
             const date = new Date(dateInput.value);
@@ -271,6 +274,7 @@
     setDueDate();
     dateInput.addEventListener('change', setDueDate);
 
+    // Update alamat customer berdasarkan pilihan nama customer
     function updateCustomerAddress() {
         const selectElement = document.getElementById('customer-name');
         const customInput = document.getElementById('custom-customer-name');
@@ -294,6 +298,7 @@
         }
     }
 
+    // Reset pilihan customer custom
     function resetCustomer() {
         document.getElementById('customer-name').style.display = 'block';
         document.getElementById('customer-name').value = '';
@@ -304,6 +309,7 @@
         document.getElementById('reset-customer').style.display = 'none';
     }
 
+    // Tambah baris penumpang baru
     function addPassengerRow() {
         const container = document.getElementById('passenger-container');
         const newRow = document.createElement('div');
@@ -334,17 +340,20 @@
         container.appendChild(newRow);
     }
 
+    // Hapus baris penumpang
     function removePassengerRow(button) {
         const row = button.parentElement;
         row.remove();
     }
 
+    // Hitung total fare dan grand total (fare + service fee)
     function calculateTotals(passengers, serviceFee) {
         const totalFare = passengers.reduce((sum, p) => sum + p.fare, 0);
         const grandTotal = totalFare + serviceFee;
         return { totalFare, grandTotal };
     }
 
+    // Render preview invoice ke div #invoice-preview
     function renderInvoicePreview(data) {
         const container = document.getElementById('invoice-preview');
         let passengerRowsHTML = '';
@@ -416,11 +425,15 @@
 
         container.innerHTML = html;
         container.style.display = 'block';
+        // Scroll ke preview supaya user bisa langsung lihat
+        container.scrollIntoView({ behavior: 'smooth' });
     }
 
+    // Ambil data dari form
     function getFormData() {
         const customerNameSelect = document.getElementById('customer-name');
         const customInput = document.getElementById('custom-customer-name');
+        // Jika pakai custom input customer, ambil dari situ
         const customerName = customerNameSelect.style.display === 'none' ? customInput.value.trim() : customerNameSelect.value.trim();
 
         // Ambil semua data penumpang
@@ -432,14 +445,14 @@
             const airline = row.querySelector('.airline').value.trim();
             const ticket_no = row.querySelector('.ticket-no').value.trim();
             const fare = parseFloat(row.querySelector('.fare').value) || 0;
-            if(passenger_name) { // Pastikan ada nama penumpang, baru dimasukkan
+            if(passenger_name) { // Pastikan ada nama penumpang
                 passengers.push({ passenger_name, description, airline, ticket_no, fare });
             }
         });
 
         const serviceFee = parseFloat(document.getElementById('service-fee').value) || 0;
 
-        const data = {
+        return {
             date: document.getElementById('date').value,
             due_date: document.getElementById('due-date').value,
             customer_name: customerName,
@@ -448,9 +461,9 @@
             passengers,
             serviceFee,
         };
-        return data;
     }
 
+    // Preview invoice (cek validasi dulu)
     function previewInvoice() {
         const data = getFormData();
 
@@ -470,6 +483,7 @@
         renderInvoicePreview(data);
     }
 
+    // Submit data invoice ke webhook n8n
     async function submitInvoice() {
         const data = getFormData();
 
@@ -491,7 +505,7 @@
         responseMessage.textContent = 'Mengirim data...';
 
         try {
-            // Ganti URL webhook n8n-mu
+            // Ganti dengan URL webhook n8n kamu
             const webhookUrl = 'https://n8n-mwjjuprcz1ho.ciluba.sumopod.my.id/webhook/form-invoice';
 
             const response = await fetch(webhookUrl, {
@@ -508,7 +522,7 @@
 
             if (result.pdfLink) {
                 responseMessage.style.color = 'green';
-                responseMessage.innerHTML = `Invoice berhasil dibuat! <a href="${result.pdfLink}" target="_blank">Download PDF</a>`;
+                responseMessage.innerHTML = `Invoice berhasil dibuat! <a href="${result.pdfLink}" target="_blank" rel="noopener">Download PDF</a>`;
             } else {
                 responseMessage.style.color = 'green';
                 responseMessage.textContent = 'Invoice berhasil dibuat!';
